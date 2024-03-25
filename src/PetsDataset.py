@@ -1,11 +1,10 @@
-import json
-
 import pandas as pd
 from torch.utils.data import DataLoader, Dataset
+from torchvision.io import read_image
 
 
 def create_dataloader() -> DataLoader:
-    return DataLoader(PetsDataset())
+    return DataLoader(PetsDataset(), batch_size=32, shuffle=True)
 
 
 def extract_height(img_data):
@@ -24,18 +23,25 @@ def read_json_file(file_path):
 
 
 class PetsDataset(Dataset):
-    def __init__(self, data_file_path="../data/data.json"):
-        self._data = read_json_file(data_file_path)
+    def __init__(self, data_folder_path="../data"):
+        self.data = read_json_file(f"{data_folder_path}/data.json")
+        self.data_folder_path = data_folder_path
 
     def __len__(self):
-        return len(self._data)
+        return len(self.data)
 
     def __getitem__(self, idx):
-        item = self._data[["height", "width"]].iloc[idx]
-        return item.to_numpy()
+        name = self.data.index[idx]
+        image = read_image(f"{self.data_folder_path}/images/{name}.png")
+        item = self.data[["height", "width"]].iloc[idx]
+        # TODO: Add the mask matrix as well.
+        return {
+            "size": item.to_numpy(),
+            "image": image,
+        }
 
 
 if __name__ == "__main__":
     dataloader = create_dataloader()
-    for entry in dataloader:
-        print(entry)
+    items = next(iter(dataloader))
+    print(items)

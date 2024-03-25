@@ -11,6 +11,10 @@ pkgs.mkShellNoCC {
     pkgs.python311Full
     pkgs.python311Packages.wandb
     pkgs.python311Packages.pandas
+    pkgs.python311Packages.datasets
+    pkgs.libstdcxx5
+    pkgs.glibc
+    pkgs.inotify-tools
     pkgs_unstable.python311Packages.torch
     pkgs_unstable.python311Packages.torchvision
   ];

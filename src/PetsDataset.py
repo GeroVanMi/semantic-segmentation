@@ -1,7 +1,6 @@
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
-from torchvision import tv_tensors
 from torchvision.io import read_image
 from torchvision.transforms.v2 import Resize
 

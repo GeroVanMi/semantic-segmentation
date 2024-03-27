@@ -6,8 +6,8 @@ from torchvision.io import read_image
 from torchvision.transforms.v2 import Resize
 
 
-def create_dataloader() -> DataLoader:
-    return DataLoader(PetsDataset(), batch_size=2, shuffle=True)
+def create_dataloader(batch_size=32) -> DataLoader:
+    return DataLoader(PetsDataset(), batch_size=batch_size, shuffle=True)
 
 
 def extract_height(img_data):
@@ -26,9 +26,11 @@ def read_json_file(file_path):
 
 
 def get_mask(path):
-    mask = read_image(path).to(torch.int64)
-    mask = torch.nn.functional.one_hot(mask, 3).to(torch.float32)
-    mask = tv_tensors.Mask(mask.permute(3, 1, 2, 0).squeeze(3))
+    mask = read_image(path).to(torch.float32)
+
+    # TODO: What do these lines do? Why do we need them? Ask Martin.
+    # mask = torch.nn.functional.one_hot(mask, 3).to(torch.float32)
+    # mask = tv_tensors.Mask(mask.permute(3, 1, 2, 0).squeeze(3))
     return mask
 
 

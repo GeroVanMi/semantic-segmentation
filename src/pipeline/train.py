@@ -10,6 +10,7 @@ def train_epoch(
     loss_function: CrossEntropyLoss,
     optimizer: torch.optim.SGD,
     device: str,
+    dev_mode=False,
 ):
     model.train()
     total_data_length = len(data_loader)
@@ -22,7 +23,7 @@ def train_epoch(
         # Loss calculation with credit to
         # - https://stackoverflow.com/questions/68901153/expected-scalar-type-long-but-found-float-in-pytorch-using-nn-crossentropyloss
         # - https://stackoverflow.com/questions/77475285/pytorch-crossentropy-loss-getting-error-runtimeerror-boolean-value-of-tensor
-        mask = mask.squeeze().long()
+        mask = mask.to(device)
         loss = loss_function(mask_prediction, mask)
         epoch_loss.append(loss.item())
 
@@ -32,6 +33,11 @@ def train_epoch(
         optimizer.step()
         optimizer.zero_grad()
 
-        print(f"{batch_index}/{total_data_length} Loss: {loss.item()}")
-        break
+        if batch_index + 1 % 100 == 0:
+            print(f"{batch_index + 1}/{total_data_length} Training Loss: {loss.item()}")
+
+        if dev_mode:
+            print(f"Training Loss: {loss.item()}")
+            break
+
     return np.mean(epoch_loss)

@@ -1,12 +1,16 @@
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
+from torchvision import tv_tensors
 from torchvision.io import read_image
 from torchvision.transforms.v2 import Resize
 
 
-def create_dataloader(batch_size=32) -> DataLoader:
-    return DataLoader(PetsDataset(), batch_size=batch_size, shuffle=True)
+def read_json_file(file_path):
+    df = pd.read_json(file_path).T
+    df["height"] = df["imgdata"].apply(extract_height)
+    df["width"] = df["imgdata"].apply(extract_width)
+    return df
 
 
 def extract_height(img_data):
@@ -17,19 +21,17 @@ def extract_width(img_data):
     return img_data["size"][1]
 
 
-def read_json_file(file_path):
-    df = pd.read_json(file_path).T
-    df["height"] = df["imgdata"].apply(extract_height)
-    df["width"] = df["imgdata"].apply(extract_width)
-    return df
-
-
 def get_mask(path):
-    mask = read_image(path).to(torch.float32)
+    mask = read_image(path).to(torch.int64)
 
-    # TODO: What do these lines do? Why do we need them? Ask Martin.
-    # mask = torch.nn.functional.one_hot(mask, 3).to(torch.float32)
-    # mask = tv_tensors.Mask(mask.permute(3, 1, 2, 0).squeeze(3))
+    # My mind was absolutley blown here.
+    # This is needed because of how the model creates predictions.
+    # The output of the model is in 3 channels! But the mask is encoded
+    # as a single channel with values of 0, 1, 2 (3 classes).
+    # So basically our prediction is a one-hot encoded vector, but in
+    # the form of channels!
+    mask = torch.nn.functional.one_hot(mask, 3).to(torch.float32)
+    mask = tv_tensors.Mask(mask.permute(3, 1, 2, 0).squeeze(3))
     return mask
 
 
@@ -51,9 +53,3 @@ class PetsDataset(Dataset):
 
         resize = Resize(self.resize_to, antialias=True)
         return [image_size.to_numpy(), resize(image), resize(mask)]
-
-
-if __name__ == "__main__":
-    dataloader = create_dataloader()
-    size, image, mask = next(iter(dataloader))
-    print(image)

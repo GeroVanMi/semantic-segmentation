@@ -8,13 +8,14 @@ from pipeline.evaluate import evaluate_epoch
 from pipeline.train import train_epoch
 from UNet import UNet
 from utils.data import create_train_test_loaders
-from utils.model import save_torch_model
+from utils.model import initialize_model, save_torch_model
 
-NUMBER_OF_EPOCHS = 15
+NUMBER_OF_EPOCHS = 20
 BATCH_SIZE = 32
-LEARNING_RATE = 0.001
+# Learning rate based off of https://www.sciencedirect.com/topics/computer-science/u-net
+LEARNING_RATE = 0.003
 
-EXPERIMENT_NAME = "One-hot mask"
+EXPERIMENT_NAME = "BatchNormalization"
 PROJECT_NAME = "Lab 03 Semantic Segmentation"
 ENTITY_NAME = "computer_vision_01"
 ARCHITECTURE_NAME = "U-Net"
@@ -38,7 +39,14 @@ def run_experiment():
         if torch.cuda.is_available()
         else "mps" if torch.backends.mps.is_available() else "cpu"
     )
+    print(f"Run: {EXPERIMENT_NAME}")
     print(f"Training on {device} device!")
+
+    number_of_gpus = torch.cuda.device_count()
+    batch_size = BATCH_SIZE
+    if number_of_gpus > 1:
+        print("Using ", number_of_gpus, "GPUs.")
+        batch_size = 112
     input("Confirm with Enter or cancel with Ctrl-C:")
 
     wandb.init(
@@ -48,16 +56,16 @@ def run_experiment():
         config={
             "learning_rate": LEARNING_RATE,
             "architecture": ARCHITECTURE_NAME,
-            "batch_size": BATCH_SIZE,
+            "batch_size": batch_size,
             "dataset": DATASET_NAME,
             "epochs": NUMBER_OF_EPOCHS,
             "dev_mode": DEV_MODE,
             "device": device,
         },
     )
-    train_loader, test_loader = create_train_test_loaders(BATCH_SIZE)
+    train_loader, test_loader = create_train_test_loaders(batch_size)
+    model = initialize_model(UNet, device)
 
-    model = UNet().to(device)
     # TODO: Add visualisation of the masks
     # TOOO: Add more interpretable metric like IOU?
     loss_function = CrossEntropyLoss()

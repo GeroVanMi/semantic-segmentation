@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.nn import CrossEntropyLoss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 
@@ -8,7 +9,7 @@ def train_epoch(
     model: torch.nn.Module,
     data_loader: DataLoader,
     loss_function: CrossEntropyLoss,
-    optimizer: torch.optim.SGD,
+    optimizer: Optimizer,
     device: str,
     dev_mode=False,
 ):

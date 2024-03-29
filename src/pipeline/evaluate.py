@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.nn import CrossEntropyLoss
 from torch.utils.data import DataLoader
+from torchmetrics import JaccardIndex
 
 
 def evaluate_epoch(
@@ -15,9 +16,10 @@ def evaluate_epoch(
     # lss_met = MeanMetric().to(DEVICE)
     model.eval()
     epoch_loss = []
+    epoch_jaccard = []
     total_data_length = len(data_loader)
     with torch.inference_mode():
-        for batch_index, (size, image, mask) in enumerate(data_loader):
+        for batch_index, (size, image, mask, simple_mask) in enumerate(data_loader):
             image = torch.Tensor.type(image, dtype=torch.float32)
             image = image.to(device)
             mask_prediction = model(image)
@@ -30,9 +32,12 @@ def evaluate_epoch(
 
             loss = loss_function(mask_prediction, mask)
             epoch_loss.append(loss.item())
+            jaccard = JaccardIndex(task="multiclass", num_classes=3).to(device)
 
-            # acc_met.update(pred, y)
-            # lss_met.update(loss_fn(pred, y))
+            simple_mask = simple_mask.squeeze(1).to(device)
+            intersection_over_union = jaccard(mask_prediction, simple_mask)
+            epoch_jaccard.append(intersection_over_union.cpu())
+
             if batch_index + 1 % 100 == 0:
                 print(f"{batch_index + 1}/{total_data_length} Test Loss: {loss.item()}")
 
@@ -40,4 +45,4 @@ def evaluate_epoch(
                 print(f"Test Loss: {loss.item()}")
                 break
 
-    return np.mean(epoch_loss)
+    return np.mean(epoch_loss), np.mean(epoch_jaccard)

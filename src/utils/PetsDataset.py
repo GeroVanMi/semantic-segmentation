@@ -22,7 +22,7 @@ def extract_width(img_data):
 
 
 def get_mask(path):
-    mask = read_image(path).to(torch.int64)
+    simple_mask = read_image(path).to(torch.int64)
 
     # My mind was absolutley blown here.
     # This is needed because of how the model creates predictions.
@@ -30,9 +30,9 @@ def get_mask(path):
     # as a single channel with values of 0, 1, 2 (3 classes).
     # So basically our prediction is a one-hot encoded vector, but in
     # the form of channels!
-    mask = torch.nn.functional.one_hot(mask, 3).to(torch.float32)
+    mask = torch.nn.functional.one_hot(simple_mask, 3).to(torch.float32)
     mask = tv_tensors.Mask(mask.permute(3, 1, 2, 0).squeeze(3))
-    return mask
+    return mask, simple_mask
 
 
 class PetsDataset(Dataset):
@@ -49,7 +49,7 @@ class PetsDataset(Dataset):
         image_size = self.data[["height", "width"]].iloc[idx]
 
         image = read_image(f"{self.data_folder_path}/images/{image_name}.png")
-        mask = get_mask(f"{self.data_folder_path}/masks/{image_name}.png")
+        mask, simple_mask = get_mask(f"{self.data_folder_path}/masks/{image_name}.png")
 
         resize = Resize(self.resize_to, antialias=True)
-        return [image_size.to_numpy(), resize(image), resize(mask)]
+        return [image_size.to_numpy(), resize(image), resize(mask), resize(simple_mask)]

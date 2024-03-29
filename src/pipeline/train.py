@@ -3,6 +3,7 @@ import torch
 from torch.nn import CrossEntropyLoss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torchmetrics import JaccardIndex
 
 
 def train_epoch(
@@ -16,7 +17,8 @@ def train_epoch(
     model.train()
     total_data_length = len(data_loader)
     epoch_loss = []
-    for batch_index, (size, image, mask) in enumerate(data_loader):
+    epoch_jaccard = []
+    for batch_index, (size, image, mask, simple_mask) in enumerate(data_loader):
         image = torch.Tensor.type(image, dtype=torch.float32)
         image = image.to(device)
         mask_prediction = model(image)
@@ -27,6 +29,12 @@ def train_epoch(
         mask = mask.to(device)
         loss = loss_function(mask_prediction, mask)
         epoch_loss.append(loss.item())
+
+        jaccard = JaccardIndex(task="multiclass", num_classes=3).to(device)
+
+        simple_mask = simple_mask.squeeze(1).to(device)
+        intersection_over_union = jaccard(mask_prediction, simple_mask)
+        epoch_jaccard.append(intersection_over_union.cpu())
 
         # What do these lines really do? This would be interesting to know.
         # Obviously I know that they apply the backpropagation, but what does that mean on a technical level?
@@ -41,4 +49,4 @@ def train_epoch(
             print(f"Training Loss: {loss.item()}")
             break
 
-    return np.mean(epoch_loss)
+    return np.mean(epoch_loss), np.mean(epoch_jaccard)

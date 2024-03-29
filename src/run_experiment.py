@@ -10,12 +10,12 @@ from UNet import UNet
 from utils.data import create_train_test_loaders
 from utils.model import initialize_model, save_torch_model
 
-NUMBER_OF_EPOCHS = 20
+NUMBER_OF_EPOCHS = 25
 BATCH_SIZE = 32
 # Learning rate based off of https://www.sciencedirect.com/topics/computer-science/u-net
 LEARNING_RATE = 0.003
 
-EXPERIMENT_NAME = "BatchNormalization"
+EXPERIMENT_NAME = "BatchNormalization with Jaccard Metric"
 PROJECT_NAME = "Lab 03 Semantic Segmentation"
 ENTITY_NAME = "computer_vision_01"
 ARCHITECTURE_NAME = "U-Net"
@@ -73,12 +73,21 @@ def run_experiment():
 
     for epoch in range(NUMBER_OF_EPOCHS):
         print(f"#### EPOCH {epoch} ####")
-        train_loss = train_epoch(
+        train_loss, train_jaccard = train_epoch(
             model, train_loader, loss_function, optimizer, device, DEV_MODE
         )
-        test_loss = evaluate_epoch(model, test_loader, loss_function, device, DEV_MODE)
+        test_loss, test_jaccard = evaluate_epoch(
+            model, test_loader, loss_function, device, DEV_MODE
+        )
 
-        wandb.log({"Training Loss": train_loss, "Testing Loss": test_loss})
+        wandb.log(
+            {
+                "Training Loss": train_loss,
+                "Training Jaccard Index": train_jaccard,
+                "Testing Loss": test_loss,
+                "Testing Jaccard Index": test_jaccard,
+            }
+        )
 
     save_torch_model(model, MODEL_SAVE_PATH, ARCHITECTURE_NAME)
 

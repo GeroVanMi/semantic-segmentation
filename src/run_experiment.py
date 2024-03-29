@@ -7,6 +7,7 @@ from torch.nn import CrossEntropyLoss
 from pipeline.evaluate import evaluate_epoch
 from pipeline.train import train_epoch
 from UNet import UNet
+from UNet_Lee import UNet_Lee
 from utils.data import create_train_test_loaders
 from utils.model import initialize_model, save_torch_model
 
@@ -15,10 +16,10 @@ BATCH_SIZE = 32
 # Learning rate based off of https://www.sciencedirect.com/topics/computer-science/u-net
 LEARNING_RATE = 0.003
 
-EXPERIMENT_NAME = "BatchNormalization with Jaccard Metric"
+EXPERIMENT_NAME = "Lee's Upsample architecture"
 PROJECT_NAME = "Lab 03 Semantic Segmentation"
 ENTITY_NAME = "computer_vision_01"
-ARCHITECTURE_NAME = "U-Net"
+ARCHITECTURE_NAME = "Lee-U-Net"
 DATASET_NAME = "OxfordPets-III"
 
 MODEL_SAVE_PATH = f"../models/{ARCHITECTURE_NAME}_{int(time.time())}.pt"
@@ -46,7 +47,7 @@ def run_experiment():
     batch_size = BATCH_SIZE
     if number_of_gpus > 1:
         print("Using ", number_of_gpus, "GPUs.")
-        batch_size = 112
+        batch_size = 64
     input("Confirm with Enter or cancel with Ctrl-C:")
 
     wandb.init(
@@ -64,7 +65,7 @@ def run_experiment():
         },
     )
     train_loader, test_loader = create_train_test_loaders(batch_size)
-    model = initialize_model(UNet, device)
+    model = initialize_model(UNet_Lee, device)
 
     # TODO: Add visualisation of the masks
     # TOOO: Add more interpretable metric like IOU?

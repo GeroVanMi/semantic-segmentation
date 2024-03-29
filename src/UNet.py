@@ -10,18 +10,12 @@ class UNet(nn.Module):
         super().__init__()
         self.relu = ReLU()
 
+        self.pool = MaxPool2d(2, stride=2)
+
         self.encoder1 = convolution_layer(3, 64)
-        self.pool1 = MaxPool2d(2, stride=2)
-
         self.encoder2 = convolution_layer(64, 128)
-        self.pool2 = MaxPool2d(2, stride=2)
-
         self.encoder3 = convolution_layer(128, 256)
-        self.pool3 = MaxPool2d(2, stride=2)
-
         self.encoder4 = convolution_layer(256, 512)
-        self.pool4 = MaxPool2d(2, stride=2)
-
         self.encoder5 = convolution_layer(512, 1024)
 
         self.upconv1 = ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
@@ -42,16 +36,16 @@ class UNet(nn.Module):
 
     def forward(self, x):
         encoded1 = self.encoder1(x)
-        pool1 = self.pool1(encoded1)
+        pool1 = self.pool(encoded1)
 
         encoded2 = self.encoder2(pool1)
-        pool2 = self.pool2(encoded2)
+        pool2 = self.pool(encoded2)
 
         encoded3 = self.encoder3(pool2)
-        pool3 = self.pool3(encoded3)
+        pool3 = self.pool(encoded3)
 
         encoded4 = self.encoder4(pool3)
-        pool4 = self.pool4(encoded4)
+        pool4 = self.pool(encoded4)
 
         encoded5 = self.encoder5(pool4)
 

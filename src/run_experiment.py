@@ -4,22 +4,23 @@ import torch
 import wandb
 from torch.nn import CrossEntropyLoss
 
+from AttentionUNet import AttentionUNet
 from pipeline.evaluate import evaluate_epoch
 from pipeline.train import train_epoch
-from UNet import UNet
-from UNet_Lee import UNet_Lee
+# from UNet import UNet
+# from UNet_Lee import UNet_Lee
 from utils.data import create_train_test_loaders
 from utils.model import initialize_model, save_torch_model
 
-NUMBER_OF_EPOCHS = 25
+NUMBER_OF_EPOCHS = 20
 BATCH_SIZE = 32
 # Learning rate based off of https://www.sciencedirect.com/topics/computer-science/u-net
 LEARNING_RATE = 0.003
 
-EXPERIMENT_NAME = "Lee's Upsample architecture"
+EXPERIMENT_NAME = "Attention UNet"
 PROJECT_NAME = "Lab 03 Semantic Segmentation"
 ENTITY_NAME = "computer_vision_01"
-ARCHITECTURE_NAME = "Lee-U-Net"
+ARCHITECTURE_NAME = "AttentionU-Net"
 DATASET_NAME = "OxfordPets-III"
 
 MODEL_SAVE_PATH = f"../models/{ARCHITECTURE_NAME}_{int(time.time())}.pt"
@@ -65,10 +66,8 @@ def run_experiment():
         },
     )
     train_loader, test_loader = create_train_test_loaders(batch_size)
-    model = initialize_model(UNet_Lee, device)
+    model = initialize_model(AttentionUNet, device)
 
-    # TODO: Add visualisation of the masks
-    # TOOO: Add more interpretable metric like IOU?
     loss_function = CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=LEARNING_RATE)
 
